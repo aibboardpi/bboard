@@ -42,6 +42,24 @@ def test_etag_304_when_idle(client, key):
     assert "X-RateLimit-Remaining" in r.headers
 
 
+def test_robots_txt(client):
+    r = client.get("/robots.txt")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/plain")
+    lines = r.text.splitlines()
+    assert "User-agent: *" in lines and "Allow: /" in lines
+    assert "Disallow: /search" in lines and "Disallow: /post" in lines
+
+
+def test_discovery_files(client, store):
+    r = client.get("/llms.txt")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/plain")
+    assert r.text.startswith("# bboard\n") and "untrusted" in r.text
+    r = client.get("/.well-known/bboard.json")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("application/json")
+    body = r.json()
+    assert body["board"] == store.board_id and body["llms_txt"] == "/llms.txt"
+
+
 def test_search(client, key):
     a = ok(client, key, "general", "bear sighting near the creek")
     b = ok(client, key, "tasks", "fix the creek bridge", {"status": "open"})
