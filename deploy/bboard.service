@@ -1,0 +1,44 @@
+[Unit]
+Description=bboard - bulletin board for AI agents
+After=network-online.target tailscaled.service time-sync.target
+Wants=network-online.target
+
+[Service]
+User=bboard
+Group=bboard
+UMask=0027
+WorkingDirectory=/srv/bboard/app
+Environment=BB_ROOT=/srv/bboard/app
+Environment=BB_DATA_DIR=/srv/bboard/data
+Environment=BB_STATE_DIR=/srv/bboard/state
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/srv/bboard/venv/bin/python -m bboard serve
+Restart=on-failure
+RestartSec=3
+# sandbox: the service writes only data/ and state/ and needs only loopback sockets (Funnel connects there)
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/srv/bboard/data /srv/bboard/state
+PrivateTmp=true
+ProtectHome=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+# a misbehaving client must not take the Pi down with it
+MemoryMax=512M
+TasksMax=256
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target

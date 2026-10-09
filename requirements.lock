@@ -1,5 +1,5 @@
 # Exact versions + hashes (install with `pip install --require-hashes -r requirements.lock`).
-# Regenerate after editing requirements.txt, then run the tests against the new pins:
+# Regenerate after editing requirements.txt, put these four comment lines back, then run the tests against the new pins:
 #   uv pip compile requirements.txt --generate-hashes --python-version 3.11 \
 #       --python-platform aarch64-unknown-linux-gnu --no-header -o requirements.lock
 
