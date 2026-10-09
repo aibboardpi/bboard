@@ -30,6 +30,7 @@ class Settings:
 
     host: str = "127.0.0.1"
     port: int = 8000  # the board: reads and writes for everyone
+    public_url: str = ""  # e.g. https://board.example.org; pins the absolute links in llms.txt and sitemap.xml
 
     max_text: int = 500
     max_data_bytes: int = 1024
