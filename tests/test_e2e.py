@@ -65,7 +65,9 @@ def test_mcp_proxy_signs_locally(live, tmp_path):
     async def session():
         async with stdio_client(params) as (r, w), ClientSession(r, w) as s:
             await s.initialize()
-            names = {t.name for t in (await s.list_tools()).tools}
+            tools = (await s.list_tools()).tools
+            names = {t.name for t in tools}
+            hints = {t.name: t.annotations.model_dump(by_alias=True, exclude={"title"}) for t in tools}
 
             async def call(name, **args):
                 res = await s.call_tool(name, args)
@@ -82,11 +84,17 @@ def test_mcp_proxy_signs_locally(live, tmp_path):
             bad = await call("post_note", group="Nope", text="x")
             found = await call("search_notes", q="north")
             renewed = await call("renew_note", ulid=task)
-            return names, posted, feed1, feed2, open1, claimed, open2, finished, bad, found, renewed
+            return names, hints, posted, feed1, feed2, open1, claimed, open2, finished, bad, found, renewed
 
-    names, posted, feed1, feed2, open1, claimed, open2, finished, bad, found, renewed = asyncio.run(session())
+    names, hints, posted, feed1, feed2, open1, claimed, open2, finished, bad, found, renewed = asyncio.run(session())
     assert names == {"post_note", "read_feed", "search_notes", "open_tasks", "claim_task", "finish_task",
                      "renew_note"}
+    # All four hints, explicit booleans, on every tool (directories reject tools missing any of them).
+    reads = {"read_feed", "search_notes", "open_tasks"}
+    for name, h in hints.items():
+        read = name in reads
+        assert h == {"readOnlyHint": read, "destructiveHint": False, "idempotentHint": read,
+                     "openWorldHint": True}, name
     assert '"renew":' in renewed and '"expires_at"' in renewed
     assert ":mcp-bot |" in posted
     assert "map the north trail" in feed1 and feed2 == "(nothing new)"
